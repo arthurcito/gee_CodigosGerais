@@ -8,7 +8,6 @@ var imageVisParam = {"opacity":1,"bands":["SR_B4","SR_B3","SR_B2"],"min":7737,"m
     table = ee.FeatureCollection("users/arthurcito/Barni_AreaEstudo"),
     veg_em = 
     /* color: #14d60c */
-    /* shown: false */
     /* displayProperties: [
       {
         "type": "rectangle"
@@ -754,12 +753,12 @@ var imageVisParam = {"opacity":1,"bands":["SR_B4","SR_B3","SR_B2"],"min":7737,"m
            [-60.69133720973519, -0.2105319464381528]]]], null, false),
     imageVisParamAgua = {"opacity":1,"bands":["band_0"],"min":-0.3579150389280943,"max":1.8010535100571938,"gamma":0.996},
     imageVisParamSolo = {"opacity":1,"bands":["band_1"],"min":-0.10424282920761674,"max":0.9290960011897251,"gamma":1},
-    imageVisParamVegetacao = {"opacity":1,"bands":["band_2"],"min":0.21825402534303484,"max":1.218642797515565,"gamma":1};
-
-
-/* 
-* AQUI ENCERRA O TRECHO DE ARQUIVOS DE ENTRADA E INICIA O SCRIPT DO CÓDIGO EM SI.
-*/
+    imageVisParamVegetacao = {"opacity":1,"bands":["band_2"],"min":0.21825402534303484,"max":1.218642797515565,"gamma":1},
+    areaTotalCenaLandsat8 = /* color: #d63000 */ee.Geometry.Polygon(
+        [[[-60.63532508837269, 1.076542831341003],
+          [-61.00886024462269, -0.7196395467401777],
+          [-59.31147254931019, -1.082142954573343],
+          [-58.94892372118519, 0.7250243298616225]]]);
 
 
 
@@ -773,8 +772,6 @@ var imageVisParam = {"opacity":1,"bands":["SR_B4","SR_B3","SR_B2"],"min":7737,"m
 * (link: https://www.youtube.com/watch?v=v29Sx5QcDxE&t=320s);
 */
 
-
-
 //-------1 - Mapa Base: Planet-------//
 // This collection is not publicly accessible. To sign up for access,
 // please see https://developers.planet.com/docs/integrations/gee/nicfi
@@ -783,7 +780,7 @@ var nicfi = ee.ImageCollection('projects/planet-nicfi/assets/basemaps/americas')
 // Filter basemaps by date and get the first image from filtered results
 var basemap= nicfi.filter(ee.Filter.date('2023-11-01','2023-12-01')).first();
 
-Map.centerObject(table,10);
+//Map.centerObject(table,10);
 
 var vis = {'bands':['R','G','B'],'min':64,'max':5454,'gamma':1.8};
 
@@ -796,10 +793,10 @@ Map.addLayer(
 
 
 
+
 //-------2 - Imagem Landsat8 Alvo-------//
 var l8img = ee.Image('LANDSAT/LC08/C02/T1_L2/LC08_231060_20231120')
 
-//Map.setCenter(-60.4753, 0.6961, 10);
 Map.addLayer(l8img,imageVisParam, 'Barni_Landsat8_20nov2023');
 Map.addLayer(table.style({color:'black', fillColor:'ff000000'}), {}, "Área de Estudo");
 
@@ -821,4 +818,50 @@ Map.addLayer(mlme.select(0), imageVisParamAgua, "Água/Sombra - Imagem Fração"
 Map.addLayer(mlme.select(1), imageVisParamSolo, "Solo - Imagem Fração");
 Map.addLayer(mlme.select(2), imageVisParamVegetacao, "Vegetacao - Imagem Fração");
 
+Map.centerObject(l8img,8);
 Map.addLayer(table.style({color:'white', fillColor:'ff000000'}), {}, "Área de Estudo");
+
+
+
+//-----4 - Exportacao das imagens-----//
+// Exportar cada banda separadamente
+Export.image.toDrive({
+  image: mlme.select(0),
+  description: 'AguaSombra_Fraction',
+  region: areaTotalCenaLandsat8,
+  scale: 30,
+  crs: 'EPSG:4674',
+  folder: 'MLME_Landsat8',
+  maxPixels: 1e13
+});
+
+Export.image.toDrive({
+  image: mlme.select(1),
+  description: 'Solo_Fraction',
+  region: areaTotalCenaLandsat8,
+  scale: 30,
+  crs: 'EPSG:4674',
+  folder: 'MLME_Landsat8',
+  maxPixels: 1e13
+});
+
+Export.image.toDrive({
+  image: mlme.select(2),
+  description: 'Vegetacao_Fraction',
+  region: areaTotalCenaLandsat8,
+  scale: 30,
+  crs: 'EPSG:4674',
+  folder: 'MLME_Landsat8',
+  maxPixels: 1e13
+});
+
+// Exportar a composição completa do mlme
+Export.image.toDrive({
+  image: mlme,
+  description: 'MLME_Composition',
+  region: areaTotalCenaLandsat8,
+  scale: 30,
+  crs: 'EPSG:4674',
+  folder: 'MLME_Landsat8',
+  maxPixels: 1e13
+});
