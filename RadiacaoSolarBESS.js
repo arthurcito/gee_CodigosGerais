@@ -1,3 +1,9 @@
+//-----------------
+//
+//CÓDIGO PARA USO NA PLATAFORMA GOOGLE EARTH ENGINE
+//
+//-----------------
+
 // Carregar o dataset BESS
 var dataset = ee.ImageCollection('SNU/ESL/BESS/Rad/v1');
 
